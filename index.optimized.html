@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Дневник прогулок</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" as="style">
+  <style>
+    html, body {
+      height: auto;
+      min-height: 100vh;
+      overflow-y: scroll;
+      -webkit-overflow-scrolling: touch;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: linear-gradient(145deg, #f0f0f0, #ffffff);
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin: 12px 10px 4px;
+      font-size: 14px;
+    }
+    h2 {
+      text-align: center;
+      margin: 24px 10px 12px;
+    }
+    form {
+      background: #fff;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+    label {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      gap: 10px;
+    }
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+    }
+    button {
+      width: 100%;
+      background: #007bff;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      padding: 12px;
+      margin-top: 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #result {
+      margin-top: 12px;
+      text-align: center;
+      font-weight: bold;
+      color: #28a745;
+    }
+    .table-container {
+      margin: 30px auto;
+      padding: 10px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow-x: auto;
+      max-width: 90vw;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 700px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #f9f9f9;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .present {
+      background: #e3fcec;
+      color: #218838;
+    }
+    .absent {
+      background: #fcebea;
+      color: #c82333;
+    }
+    .rating {
+      margin: 30px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 500px;
+      font-size: 15px;
+    }
+    .rating div {
+      margin: 6px 0;
+    }
+    .rating span.name {
+      color: #006400;
+      font-weight: 600;
+    }
+    .rating span.count {
+      color: #ff8c00;
+    }
+    #punishment {
+      text-align: center;
+      margin: 20px auto;
+      font-weight: bold;
+      font-size: 16px;
+      padding: 0 10px;
+    }
+    .skeleton {
+      height: 200px;
+      background: repeating-linear-gradient(90deg, #eee, #ddd 10px, #eee 20px);
+      animation: shimmer 1.5s infinite linear;
+    }
+    @keyframes shimmer {
+      0% { background-position: -100px; }
+      100% { background-position: 100px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Кто был на прогулке</h1>
+  <form id="attendance-form">
+    <div id="checkboxes"></div>
+    <button type="submit">Сохранить</button>
+    <div id="result"></div>
+  </form>
+
+  <div class="rating" id="rating"></div>
+  <div id="punishment"></div>
+  <div class="table-container" id="history-container">
+    <div class="skeleton" id="loading-skeleton"></div>
+  </div>
+
+  <script defer src="main.optimized.js"></script>
+</body>
+</html>
