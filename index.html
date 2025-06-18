@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Дневник прогулок</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      height: auto;
+      min-height: 100vh;
+      overflow-y: scroll;
+      -webkit-overflow-scrolling: touch;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: linear-gradient(145deg, #f0f0f0, #ffffff);
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin: 16px 10px 8px;
+      font-size: 16px;
+    }
+    h2 {
+      text-align: center;
+      margin: 24px 10px 12px;
+    }
+    form {
+      background: #fff;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+    label {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      gap: 10px;
+    }
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+    }
+    button {
+      width: 100%;
+      background: #007bff;
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      padding: 12px;
+      margin-top: 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #result {
+      margin-top: 12px;
+      text-align: center;
+      font-weight: bold;
+      color: #28a745;
+    }
+    .table-container {
+      margin: 30px auto;
+      padding: 10px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow-x: auto;
+      max-width: 90vw;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 700px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #f9f9f9;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .present {
+      background: #e3fcec;
+      color: #218838;
+    }
+    .absent {
+      background: #fcebea;
+      color: #c82333;
+    }
+    .rating {
+      margin: 30px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 500px;
+      font-size: 15px;
+    }
+    .rating div {
+      margin: 6px 0;
+    }
+    .rating span.name {
+      color: #006400;
+      font-weight: 600;
+    }
+    .rating span.count {
+      color: #ff8c00;
+    }
+    #punishment {
+      text-align: center;
+      margin: 20px auto;
+      font-weight: bold;
+      font-size: 16px;
+      padding: 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐾 Кто был на прогулке?</h1>
+  <form id="visitForm">
+    <div id="checkboxes"></div>
+    <button type="submit">Сохранить</button>
+  </form>
+  <div id="result"></div>
+  <iframe id="submitFrame" style="display:none;"></iframe>
+
+  <h2>📅 История прогулок</h2>
+  <div class="table-container">
+    <table id="historyTable"></table>
+  </div>
+
+  <h2>🏆 Рейтинг посещаемости</h2>
+  <div class="rating" id="rating"></div>
+  <div id="punishment"></div>
+
+  <script>
+    const endpoint = "https://script.google.com/macros/s/AKfycbwd9H6HDIiTgsiPuIOWb07tVrBllZB_tzxIV8wH11W0jmuYv64KNRzmT7d-40JHwmFWNA/exec";
+    const names = ["Яна Сайгон", "Паша Сайгон", "Олеся", "Слава", "Таня", "Паша Персик", "Кирилл", "Оля", "Инна", "Яна Арчи", "Саша"];
+    const emojis = ["🐶", "🐕", "🦴", "🦮", "🐾", "🦊", "🐕‍🦺", "🌭", "🎾", "🐿️", "🐩"];
+
+    const form = document.getElementById("visitForm");
+    const checkboxesContainer = document.getElementById("checkboxes");
+    const result = document.getElementById("result");
+    const iframe = document.getElementById("submitFrame");
+    const historyTable = document.getElementById("historyTable");
+    const ratingDiv = document.getElementById("rating");
+    const punishmentDiv = document.getElementById("punishment");
+
+    names.forEach((name, i) => {
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.name = name;
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(" " + emojis[i % emojis.length] + " " + name));
+      checkboxesContainer.appendChild(label);
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const marked = Array.from(form.elements)
+        .filter(el => el.type === "checkbox" && el.checked)
+        .map(el => encodeURIComponent(el.name));
+      const encodedNames = names.map(encodeURIComponent).join(",");
+      const encodedMarked = marked.join(",");
+      const date = new Date().toISOString().split("T")[0];
+      const url = `${endpoint}?date=${date}&names=${encodedNames}&marked=${encodedMarked}`;
+      iframe.src = url;
+      result.textContent = "✅ Сохранено!";
+      setTimeout(loadHistory, 1500);
+    });
+
+    function formatDate(isoDate) {
+      const d = new Date(isoDate);
+      return d.toLocaleDateString("ru-RU", { year: "numeric", month: "long", day: "numeric" });
+    }
+
+    async function loadHistory() {
+      try {
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        if (!data || data.length < 2) return;
+        historyTable.innerHTML = "";
+        const headerRow = document.createElement("tr");
+        data[0].forEach((header, idx) => {
+          const th = document.createElement("th");
+          if (idx === 0) {
+            th.textContent = "Дата";
+          } else {
+            th.textContent = emojis[(idx - 1) % emojis.length] + " " + header;
+          }
+          headerRow.appendChild(th);
+        });
+        historyTable.appendChild(headerRow);
+
+        let counts = new Array(names.length).fill(0);
+        let latestDate = null;
+
+        for (let i = 1; i < data.length; i++) {
+          const row = document.createElement("tr");
+          data[i].forEach((cell, idx) => {
+            const td = document.createElement("td");
+            if (idx === 0) {
+              td.textContent = formatDate(cell);
+              latestDate = new Date(cell);
+            } else {
+              td.textContent = cell ? "✓" : "";
+              td.className = cell ? "present" : "absent";
+              if (cell) counts[idx - 1]++;
+            }
+            row.appendChild(td);
+          });
+          historyTable.appendChild(row);
+        }
+
+        const stats = names.map((n, i) => ({ name: n, count: counts[i], emoji: emojis[i % emojis.length] }));
+        stats.sort((a, b) => b.count - a.count);
+        ratingDiv.innerHTML = stats.map(s => `<div><span class="name">${s.emoji} ${s.name}</span>: <span class="count">${s.count}</span></div>`).join("");
+
+        const worst = stats[stats.length - 1];
+        const now = new Date();
+        const currentMonth = now.toLocaleDateString("ru-RU", { month: 'long' });
+        if (latestDate && latestDate.getMonth() !== now.getMonth()) {
+          punishmentDiv.textContent = `В ${currentMonth} слабым звеном была ${worst.name}. ${worst.name} проставляется 🍾.`;
+        } else {
+          punishmentDiv.textContent = `Месяц пока не кончился, но пока, скорее всего, проставляться будет ${worst.name} 🍾.`;
+        }
+      } catch (err) {
+        console.error("Ошибка загрузки истории:", err);
+      }
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>
