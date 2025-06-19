@@ -194,7 +194,11 @@ names.forEach(name => {
 
     async function loadFromSheet() {
   try {
-    const res = await fetch('/api/savePartyData');
+    const res = await fetch('/api/savePartyData', {
+  method: 'POST',
+  body: JSON.stringify({ get: true }),
+  headers: { 'Content-Type': 'application/json' }
+});
     const saved = await res.json();
 
     const inputs = document.querySelectorAll('input[name="spent"]');
