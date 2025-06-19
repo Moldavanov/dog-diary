@@ -2,15 +2,17 @@ export default async (req, context) => {
   const scriptUrl = "https://script.google.com/macros/s/AKfycbwd9H6HDIiTgsiPuIOWb07tVrBllZB_tzxIV8wH11W0jmuYv64KNRzmT7d-40JHwmFWNA/exec";
 
   const method = req.method;
-  const body = await req.text();
 
   const forwardOptions = {
-    method: "POST",
+    method,
     headers: {
       "Content-Type": "application/json",
-    },
-    body
+    }
   };
+
+  if (method === "POST") {
+    forwardOptions.body = await req.text();
+  }
 
   try {
     const response = await fetch(scriptUrl, forwardOptions);
