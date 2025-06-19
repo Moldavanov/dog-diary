@@ -95,14 +95,15 @@
   <div id="result"></div>
   <button onclick="resetData()">Стереть расчёты</button>
   <script>
-    const endpoint = 'https://script.google.com/macros/s/AKfycbwd9H6HDIiTgsiPuIOWb07tVrBllZB_tzxIV8wH11W0jmuYv64KNRzmT7d-40JHwmFWNA/exec'; // заменишь на свой
+    const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_URL/exec';
     const names = [
       "Яна Сайгон", "Паша Сайгон", "Олеся", "Слава",
       "Таня", "Паша Персик", "Оля", "Яна Арчи", "Саша"
     ];
     const emojis = ["🐶", "🍕", "🍷", "🥩", "🎉", "🧀", "🍺", "🍒", "🍾"];
+    const storageKey = 'partyExpenses';
 
-    function renderForm(saved = {}) {
+    function renderForm() {
       const container = document.getElementById('partyForm');
       container.innerHTML = '';
       names.forEach((name, i) => {
@@ -111,8 +112,8 @@
         item.innerHTML = `
           <span>${emoji} ${name}</span>
           <span>
-            <input type="number" name="spent" data-name="${name}" placeholder="₽" value="${saved[name] || ''}">
-            <label title="Не участвовал"><input type="checkbox" data-skip="${name}" ${saved[name] === null ? 'checked' : ''}></label>
+            <input type="number" name="spent" data-name="${name}" placeholder="₽">
+            <label title="Не участвовал"><input type="checkbox" data-skip="${name}"></label>
           </span>`;
         container.appendChild(item);
       });
@@ -123,38 +124,26 @@
       container.appendChild(button);
     }
 
-    async function loadSavedData() {
-      try {
-        const res = await fetch(endpoint + '?action=party');
-        const data = await res.json();
-        const parsed = {};
-        for (let name of names) {
-          parsed[name] = data[name] === "SKIP" ? null : parseFloat(data[name] || '');
-        }
-        renderForm(parsed);
-        if (Object.values(parsed).some(v => v !== '' && v !== null)) calculate();
-      } catch (e) {
-        console.error('Ошибка загрузки:', e);
-        renderForm();
-      }
-    }
-
-    async function calculate() {
+    function calculate() {
       const inputs = document.querySelectorAll('input[name="spent"]');
       const skips = document.querySelectorAll('input[type="checkbox"]');
       const expenses = {};
+      const skipped = new Set();
 
       skips.forEach(ch => {
-        if (ch.checked) expenses[ch.dataset.skip] = null;
-      });
-      inputs.forEach(input => {
-        const name = input.dataset.name;
-        if (!(name in expenses)) expenses[name] = parseFloat(input.value) || 0;
+        if (ch.checked) skipped.add(ch.dataset.skip);
       });
 
-      const participants = Object.keys(expenses).filter(name => expenses[name] !== null);
+      inputs.forEach(input => {
+        const name = input.dataset.name;
+        const value = parseFloat(input.value) || 0;
+        if (!skipped.has(name)) expenses[name] = value;
+      });
+
+      const participants = Object.keys(expenses);
       const total = participants.reduce((sum, name) => sum + expenses[name], 0);
       const average = total / participants.length;
+
       const deltas = {};
       participants.forEach(name => deltas[name] = +(expenses[name] - average).toFixed(2));
 
@@ -179,27 +168,58 @@
       const result = document.getElementById('result');
       result.innerHTML = `<div id="summary"><strong>Общий счёт: ${total}₽</strong><br>Участников: ${participants.length}<br>Средний вклад: ${average.toFixed(2)}₽</div>` + (transactions.length ? transactions.join('') : '<div class="line">Никто никому ничего не должен</div>');
 
-      // Сохраняем на сервер
-      const payload = {};
-      for (let name of names) {
-        payload[name] = expenses[name] === null ? 'SKIP' : (expenses[name] || '');
-      }
-      try {
-        await fetch(endpoint, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-      } catch (e) {
-        console.error('Ошибка сохранения:', e);
-      }
+      localStorage.setItem(storageKey, JSON.stringify({ expenses, skipped: Array.from(skipped) }));
+      const payload = { skipped: Array.from(skipped) };
+      names.forEach(name => {
+        payload[name] = skipped.has(name) ? '' : expenses[name] || 0;
+      });
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     function resetData() {
-      renderForm();
+      localStorage.removeItem(storageKey);
       document.getElementById('result').innerHTML = '';
+      renderForm();
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ clear: true }),
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    loadSavedData();
+    async function loadFromSheet() {
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const saved = await res.json();
+        const inputs = document.querySelectorAll('input[name="spent"]');
+        const skips = document.querySelectorAll('input[type="checkbox"]');
+
+        inputs.forEach(input => {
+          const name = input.dataset.name;
+          if (saved[name]) {
+            input.value = saved[name];
+          }
+        });
+
+        skips.forEach(ch => {
+          if (saved.skipped && saved.skipped.includes(ch.dataset.skip)) {
+            ch.checked = true;
+          }
+        });
+        calculate();
+      } catch (e) {
+        console.warn('Не удалось загрузить из таблицы:', e);
+      }
+    }
+
+    window.onload = () => {
+      renderForm();
+      loadFromSheet();
+    }
   </script>
 </body>
 </html>
