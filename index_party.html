@@ -193,7 +193,7 @@
 
     async function loadFromSheet() {
       try {
-        const res = await fetch(SCRIPT_URL);
+        const res = await fetch(SCRIPT_URL + '?party=true');
         const saved = await res.json();
         const inputs = document.querySelectorAll('input[name="spent"]');
         const skips = document.querySelectorAll('input[type="checkbox"]');
