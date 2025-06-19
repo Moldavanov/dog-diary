@@ -192,29 +192,30 @@
     }
 
     async function loadFromSheet() {
-      try {
-        const res = await fetch(SCRIPT_URL + '?party=true');
-        const saved = await res.json();
-        const inputs = document.querySelectorAll('input[name="spent"]');
-        const skips = document.querySelectorAll('input[type="checkbox"]');
+  try {
+    const res = await fetch(SCRIPT_URL + '?party=1');
+    const saved = await res.json();
+    const inputs = document.querySelectorAll('input[name="spent"]');
+    const skips = document.querySelectorAll('input[type="checkbox"]');
 
-        inputs.forEach(input => {
-          const name = input.dataset.name;
-          if (saved[name]) {
-            input.value = saved[name];
-          }
-        });
-
-        skips.forEach(ch => {
-          if (saved.skipped && saved.skipped.includes(ch.dataset.skip)) {
-            ch.checked = true;
-          }
-        });
-        calculate();
-      } catch (e) {
-        console.warn('Не удалось загрузить из таблицы:', e);
+    inputs.forEach(input => {
+      const name = input.dataset.name;
+      if (saved[name]) {
+        input.value = saved[name];
       }
-    }
+    });
+
+    skips.forEach(ch => {
+      if (saved.skipped && saved.skipped.includes(ch.dataset.skip)) {
+        ch.checked = true;
+      }
+    });
+    calculate();
+  } catch (e) {
+    console.warn('Не удалось загрузить из таблицы:', e);
+  }
+}
+
 
     window.onload = () => {
       renderForm();
