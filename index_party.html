@@ -169,7 +169,7 @@
       result.innerHTML = `<div id="summary"><strong>Общий счёт: ${total}₽</strong><br>Участников: ${participants.length}<br>Средний вклад: ${average.toFixed(2)}₽</div>` + (transactions.length ? transactions.join('') : '<div class="line">Никто никому ничего не должен</div>');
 
       localStorage.setItem(storageKey, JSON.stringify({ expenses, skipped: Array.from(skipped) }));
-     const payload = { skipped: Array.from(skipped) };
+     payload.skipped = JSON.stringify(Array.from(skipped));
 names.forEach(name => {
   payload[name] = skipped.has(name) ? '' : expenses[name] || 0;
 });
@@ -208,9 +208,18 @@ names.forEach(name => {
     });
 
     skips.forEach(ch => {
-      if (saved.skipped && saved.skipped.includes(ch.dataset.skip)) {
-        ch.checked = true;
-      }
+      let skippedList = [];
+try {
+  skippedList = JSON.parse(saved.skipped);
+  if (!Array.isArray(skippedList)) skippedList = [];
+} catch {
+  skippedList = [];
+}
+
+if (skippedList.includes(ch.dataset.skip)) {
+  ch.checked = true;
+}
+
     });
 
     calculate(); // отрисовать расчёты на основе загруженного
