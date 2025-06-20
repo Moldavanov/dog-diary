@@ -48,9 +48,6 @@
       border-radius: 6px;
       border: 1px solid #ccc;
     }
-    input[type="checkbox"] {
-      margin-left: 10px;
-    }
     button {
       width: 100%;
       background: #007bff;
@@ -87,6 +84,24 @@
       color: #ff8c00;
       font-weight: bold;
     }
+    .skip-toggle {
+      cursor: pointer;
+      font-size: 20px;
+      user-select: none;
+      color: #ccc;
+      transition: transform 0.1s;
+      margin-left: 8px;
+    }
+    .skip-toggle.active {
+      color: red;
+      transform: scale(1.2);
+    }
+    .note {
+      font-style: italic;
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -94,44 +109,64 @@
   <form id="partyForm"></form>
   <div id="result"></div>
   <button onclick="resetData()">Стереть расчёты</button>
-  <script>
-  const SCRIPT_URL = '/api/savePartyData';
-  const names = [
-    "Яна Сайгон", "Паша Сайгон", "Олеся", "Слава",
-    "Таня", "Паша Персик", "Оля", "Яна Арчи", "Саша"
-  ];
-  const emojis = ["🐶", "🍕", "🍷", "🥩", "🎉", "🧀", "🍺", "🍒", "🍾"];
-  const storageKey = 'partyExpenses';
 
-  function renderForm() {
-    const container = document.getElementById('partyForm');
-    container.innerHTML = '';
-    names.forEach((name, i) => {
-      const emoji = emojis[i];
-      const item = document.createElement('label');
-      item.innerHTML = `
-        <span>${emoji} ${name}</span>
-        <span>
-          <input type="number" name="spent" data-name="${name}" placeholder="₽" id="input-${i}">
-          <label title="Не участвовал"><input type="checkbox" data-skip="${name}" onchange="document.getElementById('input-${i}').disabled = this.checked;"></label>
-        </span>`;
-      container.appendChild(item);
+<script>
+const SCRIPT_URL = '/api/savePartyData';
+const names = [
+  "Яна Сайгон", "Паша Сайгон", "Олеся", "Слава",
+  "Таня", "Паша Персик", "Оля", "Яна Арчи", "Саша"
+];
+const emojis = ["🐶", "🍕", "🍷", "🥩", "🎉", "🧀", "🍺", "🍒", "🍾"];
+const storageKey = 'partyExpenses';
+
+function renderForm() {
+  const container = document.getElementById('partyForm');
+  container.innerHTML = '';
+
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.textContent = 'Если кто-то не участвует, нужно поставить крестик справа.';
+  container.appendChild(note);
+
+  names.forEach((name, i) => {
+    const emoji = emojis[i];
+    const item = document.createElement('label');
+    item.innerHTML = `
+      <span>${emoji} ${name}</span>
+      <span>
+        <input type="number" name="spent" data-name="${name}" placeholder="₽" id="input-${i}">
+        <span class="skip-toggle" data-skip="${name}" title="Не участвовал">❌</span>
+      </span>`;
+    container.appendChild(item);
+  });
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = 'Рассчитать';
+  button.onclick = calculate;
+  container.appendChild(button);
+
+  // Повесим обработчики на крестики
+  setTimeout(() => {
+    document.querySelectorAll('.skip-toggle').forEach(label => {
+      const name = label.dataset.skip;
+      const input = document.querySelector(`input[data-name="${name}"]`);
+      label.addEventListener('click', () => {
+        label.classList.toggle('active');
+        if (input) input.disabled = label.classList.contains('active');
+      });
     });
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = 'Рассчитать';
-    button.onclick = calculate;
-    container.appendChild(button);
-  }
+  }, 0);
+}
 
-  function calculate() {
+function calculate() {
   const inputs = document.querySelectorAll('input[name="spent"]');
-  const skips = document.querySelectorAll('input[type="checkbox"]');
+  const toggles = document.querySelectorAll('.skip-toggle');
   const expenses = {};
   const skipped = new Set();
 
-  skips.forEach(ch => {
-    if (ch.checked) skipped.add(ch.dataset.skip);
+  toggles.forEach(toggle => {
+    if (toggle.classList.contains('active')) skipped.add(toggle.dataset.skip);
   });
 
   inputs.forEach(input => {
@@ -168,31 +203,28 @@
   const result = document.getElementById('result');
   result.innerHTML = `<div id="summary"><strong>Общий счёт: ${total}₽</strong><br>Участников: ${participants.length}<br>Средний вклад: ${average.toFixed(2)}₽</div>` + (transactions.length ? transactions.join('') : '<div class="line">Никто никому ничего не должен</div>');
 
-  localStorage.setItem(storageKey, JSON.stringify({ expenses, skipped: Array.from(skipped) }));
-
   const payload = { skipped: Array.from(skipped) };
   names.forEach(name => {
     payload[name] = skipped.has(name) ? '' : expenses[name] || 0;
   });
 
-  fetch('/api/savePartyData', {
+  fetch(SCRIPT_URL, {
     method: 'POST',
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' }
   });
 }
 
-
-  function resetData() {
-    localStorage.removeItem(storageKey);
-    document.getElementById('result').innerHTML = '';
-    renderForm();
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ clear: true }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+function resetData() {
+  localStorage.removeItem(storageKey);
+  document.getElementById('result').innerHTML = '';
+  renderForm();
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ clear: true }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
 
 async function loadFromSheet() {
   try {
@@ -204,9 +236,8 @@ async function loadFromSheet() {
     const saved = await res.json();
 
     const inputs = document.querySelectorAll('input[name="spent"]');
-    const skips = document.querySelectorAll('input[type="checkbox"]');
+    const toggles = document.querySelectorAll('.skip-toggle');
 
-    // Восстанавливаем суммы
     inputs.forEach(input => {
       const name = input.dataset.name;
       if (saved[name]) {
@@ -214,24 +245,17 @@ async function loadFromSheet() {
       }
     });
 
-    // Восстанавливаем исключённых
     let skippedList = [];
     if (saved.skipped) {
       skippedList = saved.skipped.split(',').map(s => s.trim()).filter(Boolean);
     }
 
-    skips.forEach(ch => {
-      if (skippedList.includes(ch.dataset.skip)) {
-        ch.checked = true;
-      }
-    });
-
-    // 💥 Обновляем disabled-состояние полей ввода
-    skips.forEach(ch => {
-      const name = ch.dataset.skip;
-      const input = document.querySelector(`input[data-name="${name}"]`);
-      if (input) {
-        input.disabled = ch.checked;
+    toggles.forEach(toggle => {
+      const name = toggle.dataset.skip;
+      if (skippedList.includes(name)) {
+        toggle.classList.add('active');
+        const input = document.querySelector(`input[data-name="${name}"]`);
+        if (input) input.disabled = true;
       }
     });
 
@@ -239,17 +263,13 @@ async function loadFromSheet() {
     console.warn('Не удалось загрузить из таблицы:', e);
   }
 
-  // авторасчёт
   document.querySelector('button[type="button"]').click();
 }
 
-
-
-
-  window.onload = () => {
-    renderForm();
-    loadFromSheet();
-  }
+window.onload = () => {
+  renderForm();
+  loadFromSheet();
+};
 </script>
 
 </body>
