@@ -114,6 +114,11 @@
   <h1>🍾 Расчёт вечеринки</h1>
   <form id="partyForm"></form>
   <div id="result"></div>
+  
+  <p style="text-align: center; font-size: 14px; color: #666; margin: 20px auto 10px; max-width: 500px;">
+  Когда все со всеми рассчитались, можно сбросить расчёты.
+  </p>
+
   <button onclick="resetData()">Стереть расчёты</button>
 
 <script>
@@ -131,7 +136,7 @@ function renderForm() {
 
   const note = document.createElement('div');
   note.className = 'note';
-  note.textContent = 'Если кто-то не участвует, нужно поставить крестик справа.';
+  note.textContent = 'Если кто-то не участвует, нужно нажать крестик справа.';
   container.appendChild(note);
 
   names.forEach((name, i) => {
