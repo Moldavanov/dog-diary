@@ -195,43 +195,44 @@
   }
 
   async function loadFromSheet() {
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({ get: true }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const saved = await res.json();
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ get: true }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const saved = await res.json();
 
-      const inputs = document.querySelectorAll('input[name="spent"]');
-      const skips = document.querySelectorAll('input[type="checkbox"]');
+    const inputs = document.querySelectorAll('input[name="spent"]');
+    const skips = document.querySelectorAll('input[type="checkbox"]');
 
-      inputs.forEach(input => {
-        const name = input.dataset.name;
-        if (saved[name]) {
-          input.value = saved[name];
-        }
-      });
-
-      let skippedList = [];
-      try {
-        skippedList = JSON.parse(saved.skipped);
-        if (!Array.isArray(skippedList)) skippedList = [];
-      } catch {
-        skippedList = [];
+    inputs.forEach(input => {
+      const name = input.dataset.name;
+      if (saved[name]) {
+        input.value = saved[name];
       }
+    });
 
-      skips.forEach(ch => {
-        if (skippedList.includes(ch.dataset.skip)) {
-          ch.checked = true;
-        }
-      });
-
-      calculate();
-    } catch (e) {
-      console.warn('Не удалось загрузить из таблицы:', e);
+    let skippedList = [];
+    try {
+      skippedList = JSON.parse(saved.skipped);
+      if (!Array.isArray(skippedList)) skippedList = [];
+    } catch {
+      skippedList = [];
     }
+
+    skips.forEach(ch => {
+      if (skippedList.includes(ch.dataset.skip)) {
+        ch.checked = true;
+      }
+    });
+
+    // ❌ calculate(); — больше не вызываем!
+  } catch (e) {
+    console.warn('Не удалось загрузить из таблицы:', e);
   }
+}
+
 
   window.onload = () => {
     renderForm();
