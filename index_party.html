@@ -226,15 +226,23 @@ async function loadFromSheet() {
       }
     });
 
-    // 🔕 Никаких calculate()
+    // 💥 Обновляем disabled-состояние полей ввода
+    skips.forEach(ch => {
+      const name = ch.dataset.skip;
+      const input = document.querySelector(`input[data-name="${name}"]`);
+      if (input) {
+        input.disabled = ch.checked;
+      }
+    });
+
   } catch (e) {
     console.warn('Не удалось загрузить из таблицы:', e);
   }
 
-document.querySelector('button[type="button"]').click();
-
-  
+  // авторасчёт
+  document.querySelector('button[type="button"]').click();
 }
+
 
 
 
