@@ -194,7 +194,7 @@
     });
   }
 
-  async function loadFromSheet() {
+async function loadFromSheet() {
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
@@ -206,6 +206,7 @@
     const inputs = document.querySelectorAll('input[name="spent"]');
     const skips = document.querySelectorAll('input[type="checkbox"]');
 
+    // Восстанавливаем суммы
     inputs.forEach(input => {
       const name = input.dataset.name;
       if (saved[name]) {
@@ -213,12 +214,10 @@
       }
     });
 
+    // Восстанавливаем исключённых
     let skippedList = [];
-    try {
-      skippedList = JSON.parse(saved.skipped);
-      if (!Array.isArray(skippedList)) skippedList = [];
-    } catch {
-      skippedList = [];
+    if (saved.skipped) {
+      skippedList = saved.skipped.split(',').map(s => s.trim()).filter(Boolean);
     }
 
     skips.forEach(ch => {
@@ -227,11 +226,12 @@
       }
     });
 
-    // ❌ calculate(); — больше не вызываем!
+    // 🔕 Никаких calculate()
   } catch (e) {
     console.warn('Не удалось загрузить из таблицы:', e);
   }
 }
+
 
 
   window.onload = () => {
