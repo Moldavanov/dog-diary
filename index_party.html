@@ -112,8 +112,8 @@
       item.innerHTML = `
         <span>${emoji} ${name}</span>
         <span>
-          <input type="number" name="spent" data-name="${name}" placeholder="₽">
-          <label title="Не участвовал"><input type="checkbox" data-skip="${name}"></label>
+          <input type="number" name="spent" data-name="${name}" placeholder="₽" id="input-${i}">
+          <label title="Не участвовал"><input type="checkbox" data-skip="${name}" onchange="document.getElementById('input-${i}').disabled = this.checked;"></label>
         </span>`;
       container.appendChild(item);
     });
@@ -230,6 +230,10 @@ async function loadFromSheet() {
   } catch (e) {
     console.warn('Не удалось загрузить из таблицы:', e);
   }
+
+document.querySelector('button[type="button"]').click();
+
+  
 }
 
 
